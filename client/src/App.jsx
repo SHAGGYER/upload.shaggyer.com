@@ -1,7 +1,6 @@
 import "./globals.css";
 import React, {useEffect, useState} from "react";
 import PublicContext from "./contexts/PublicContext";
-import {Agent} from "./services/api";
 import styled, {ThemeProvider, css} from "styled-components";
 import cogoToast from "cogo-toast";
 import io from "socket.io-client";
@@ -25,7 +24,6 @@ function MyApp() {
   const location = useLocation()
   const navigate = useNavigate()
   const {githubAccessToken, githubUsername} = queryString.parse(location.search);
-  const [initialized, setInitialized] = useState(false);
   const [appSettings, setAppSettings] = useState(null);
   const [user, setUser] = useState(null);
   const [socket, setSocket] = useState(null);
@@ -51,14 +49,6 @@ function MyApp() {
       setSocket(s);
     }
   }, [])
-
-  const login = async (token) => {
-    localStorage.setItem("token", token);
-    const user = await initialize();
-    if (user) {
-      cogoToast.success("You are now logged in");
-    }
-  };
 
   const redirect = async (path, external = false) => {
     if (!external) {

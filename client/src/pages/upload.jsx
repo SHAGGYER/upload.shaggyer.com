@@ -377,27 +377,6 @@ export default function YourApps() {
     });
   };
 
-  const installApp = async (event) => {
-    event.preventDefault();
-    setErrors([]);
-
-    try {
-      const formData = new FormData();
-      formData.append("zip", file);
-
-      const {data} = await HttpClient().post(
-        "/api/apps/upload-zipped-website",
-        formData
-      );
-      setSubdomain(data.subdomain);
-    } catch (e) {
-      console.log(e);
-      if (e.status === 403) {
-        setErrors(e.data.errors);
-      }
-    }
-  };
-
   const getGithubRepos = async () => {
     const {data} = await axios.get("https://api.github.com/user/repos", {
       headers: {
