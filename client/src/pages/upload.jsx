@@ -4,6 +4,73 @@ import styled from "styled-components";
 import {CustomDialog, StaticDialog, useDialog} from "react-st-modal";
 import axios from "axios";
 
+const Container = styled.section`
+  border: 1px solid #ccc;
+  padding: 1rem;
+  width: 700px;
+  max-width: 700px;
+  margin: 2rem auto;
+  
+  > h2 {
+    font-size: 40px;
+    margin-bottom: 1rem;
+  }
+  
+  > button {
+    border: 1px solid black;
+    padding: 0.5rem 1rem;
+  }
+  
+  > a {
+    text-decoration: none;
+    color: black;
+    border: 1px solid black;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+  }
+`
+
+const SearchContainer = styled.div`
+  input {
+    padding: 1rem;
+    width: 100%;
+  }
+`
+
+const RepoList = styled.article`
+  margin-top: 1rem;
+  
+  ${SearchContainer} {
+    margin-bottom: 1rem;
+  }
+  
+  ul {
+    border: 1px solid #ccc;
+    list-style: none;
+    padding: 0;
+    height: 500px;
+    overflow-y: auto;
+
+    li {
+      border-bottom: 1px solid #ccc;
+      padding: 1rem;
+      display: grid;
+      grid-template-columns: 4fr 1fr 1fr;
+      justify-content: space-between;
+      align-items: center;
+
+      :last-child {
+        border-bottom: none;
+      }
+
+      button {
+        border: 1px solid black;
+        padding: 0.5rem 1rem;
+      }
+    }
+  }
+`
+
 const ProgressContainer = styled.div`
   background-color: black;
   overflow-y: auto;
@@ -18,6 +85,30 @@ const ProgressContainer = styled.div`
     font-family: inherit !important;
   }
 `;
+
+const EnvVarsContainer = styled.div`
+  width: 500px;
+  
+  textarea {
+    padding: 0.5rem;
+    width: 100%;
+    height: 300px;
+    resize: none;
+    margin-bottom: 1rem;
+  }
+  
+  button {
+    padding: 0.5rem 1rem;
+    border: 1px solid black;
+  }
+`
+
+const ProgressDialogElement = styled.section`
+  button {
+    padding: 0.5rem 1rem;
+    border: 1px solid black;
+  }
+`
 
 const ProgressDialog = ({
                           progressCount,
@@ -35,6 +126,7 @@ const ProgressDialog = ({
   const {redirect} = useContext(PublicContext);
 
   const progressRef = useRef();
+
   useEffect(() => {
     if (progressRef.current) {
       const element = progressRef.current;
@@ -43,11 +135,11 @@ const ProgressDialog = ({
   }, [JSON.stringify(progress)]);
 
   return (
-    <div style={{padding: "1rem"}}>
+    <ProgressDialogElement style={{padding: "1rem"}}>
       <div style={{display: "grid", gridTemplateColumns: "50px 1fr", alignItems: "center", gap: "1rem"}}>
         {progressCount && totalSteps ? (
           <span
-            style={{fontSize: "30px", display: "block", textAlign: "center"}}
+            style={{fontSize: "20px", display: "block", textAlign: "center"}}
           >
             {((progressCount / totalSteps) * 100).toFixed(0)}%
           </span>
@@ -69,7 +161,6 @@ const ProgressDialog = ({
               fontSize: "20px",
               display: "flex",
               alignItems: "center",
-              gap: "0.75rem",
             }}
           >
             <i className="fas fa-chevron-right"></i>
@@ -93,35 +184,37 @@ const ProgressDialog = ({
               {new Date(progressTime * 1000).toISOString().substr(11, 8)}
             </span>
           </p>
+          <div style={{display: "flex", alignItems: "center", gap: "0.25rem", marginTop: "1rem"}}>
+            {!installationComplete ? (
+              <button
+                disabled={terminatedByUser || failed}
+                onClick={userTerminate}
+              >
+                Cancel
+              </button>
+            ) : (
+              <button
+                onClick={() =>
+                  redirect("https://" + subdomain + ".shaggyer.com", true)
+                }
+              >
+                Show App
+              </button>
+            )}
+            {(failed || terminatedByUser || installationComplete) && (
+              <React.Fragment>
+                <br/>
+                <button onClick={close}>Exit</button>
+              </React.Fragment>
+            )}
+          </div>
+
         </div>
       </div>
       <br/>
 
-      <div style={{display: "flex", alignItems: "center", gap: "0.5rem"}}>
-        {!installationComplete ? (
-          <button
-            disabled={terminatedByUser || failed}
-            onClick={userTerminate}
-          >
-            Cancel
-          </button>
-        ) : (
-          <button
-            onClick={() =>
-              redirect("https://" + subdomain + ".shaggyer.com", true)
-            }
-          >
-            Show App
-          </button>
-        )}
-        {(failed || terminatedByUser || installationComplete) && (
-          <React.Fragment>
-            <br/>
-            <button onClick={close}>Exit</button>
-          </React.Fragment>
-        )}
-      </div>
-    </div>
+
+    </ProgressDialogElement>
   );
 };
 
@@ -139,7 +232,7 @@ const RepoDialog = ({repo}) => {
   };
 
   return (
-    <div style={{padding: "1rem"}}>
+    <EnvVarsContainer style={{padding: "1rem"}}>
       {repo.language && repo.language === "PHP" && (
         <React.Fragment>
           <textarea
@@ -153,7 +246,7 @@ const RepoDialog = ({repo}) => {
           </button>
         </React.Fragment>
       )}
-    </div>
+    </EnvVarsContainer>
   );
 };
 
@@ -165,6 +258,7 @@ export default function YourApps() {
   const [errors, setErrors] = useState([]);
   const [subdomain, setSubdomain] = useState(null);
   const [githubRepos, setGithubRepos] = useState([]);
+  const [defaultGithubRepos, setDefaultGithubRepos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [progressDialogOpen, setProgressDialogOpen] = useState(false);
   const [progressCount, setProgressCount] = useState(0);
@@ -181,8 +275,20 @@ export default function YourApps() {
   const [githubAccessToken, setGithubAccessToken] = useState(localStorage.getItem("githubAccessToken"))
   const [githubUserName, setGithubUserName] = useState(localStorage.getItem("githubUsername"))
 
+  const [searchRepoText, setSearchRepoText] = useState("")
+
+
 
   const progressTimeRef = useRef();
+
+  useEffect(() => {
+    if (searchRepoText) {
+      const newRepos = defaultGithubRepos.filter(x => x.name.includes(searchRepoText))
+      setGithubRepos(newRepos)
+    } else {
+      setGithubRepos(defaultGithubRepos)
+    }
+  }, [searchRepoText])
 
   useEffect(() => {
     if (socket) {
@@ -223,13 +329,11 @@ export default function YourApps() {
       let oldProgress = [];
 
       socket.on("installation-progress", (x) => {
-        console.log("oldProgress", oldProgress);
         if (!progressDialogOpen) {
           setProgressDialogOpen(true);
         }
         if (x) {
           if (x.failed) {
-            console.log("failed");
             setInstallationFailed(true);
             oldProgress.push(x.text);
             oldProgress.push("Cleaning up...");
@@ -302,6 +406,7 @@ export default function YourApps() {
     });
 
     setGithubRepos(data);
+    setDefaultGithubRepos(data);
   };
 
   const openRepoDialog = async (repo) => {
@@ -329,110 +434,64 @@ export default function YourApps() {
 
   return (
     <React.Fragment>
-      <div>
-        <div>
-          <React.Fragment>
-            <h2>Upload own app</h2>
+      <Container>
+        <h2>Upload own app</h2>
 
-            {githubAccessToken && (
-              <button onClick={getGithubRepos}>
-                Get Github Repos
-              </button>
-            )}
+        {githubAccessToken ? (
+          <button onClick={getGithubRepos}>
+            Get Github Repos
+          </button>
+        ) : (
+          <a href={import.meta.env.VITE_APP_URL+"/api/auth/github"}>Authenticate with Github</a>
+        )}
 
-            {!!githubRepos.length && (
-              <ul>
-                {githubRepos.map((repo, index) => (
-                  <li key={index}>
-                    <div style={{display: "grid", gridTemplateColumns: "3fr 5fr 1fr"}}>
-                      {repo.name}
-                      <p style={{textAlign: "center"}}>
+
+
+        {!!githubRepos.length && (
+          <RepoList>
+            <SearchContainer>
+              <input value={searchRepoText} onChange={e => setSearchRepoText(e.target.value)} type="text" placeholder="Search for repo" />
+            </SearchContainer>
+            <ul>
+              {githubRepos.map((repo, index) => (
+                <li key={index}>
+                  <span>{repo.name}</span>
+                  <span className="access">
                         {repo.private ? "Private" : "Public"}
-                      </p>
-                      <button onClick={() => openRepoDialog(repo)}>
-                        Install
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+                      </span>
+                  <button onClick={() => openRepoDialog(repo)}>
+                    Install
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </RepoList>
+        )}
 
-            <StaticDialog
-              isOpen={progressDialogOpen}
-              title="Installation Progress"
-              onAfterClose={(result) => {
-                setProgressDialogOpen(true);
-              }}
-            >
-              {/* see previous demo */}
-              <ProgressDialog
-                progress={progress}
-                progressCount={progressCount}
-                progressTime={progressTime}
-                failed={installationFailed}
-                intermediateStep={intermediateStep}
-                close={() => setProgressDialogOpen(false)}
-                userTerminate={userTerminate}
-                terminatedByUser={terminatedByUser}
-                totalSteps={totalSteps}
-                installationComplete={installationComplete}
-                subdomain={subdomain}
-              />
-            </StaticDialog>
+        <StaticDialog
+          isOpen={progressDialogOpen}
+          title="Installation Progress"
+          onAfterClose={(result) => {
+            setProgressDialogOpen(true);
+          }}
+        >
+          {/* see previous demo */}
+          <ProgressDialog
+            progress={progress}
+            progressCount={progressCount}
+            progressTime={progressTime}
+            failed={installationFailed}
+            intermediateStep={intermediateStep}
+            close={() => setProgressDialogOpen(false)}
+            userTerminate={userTerminate}
+            terminatedByUser={terminatedByUser}
+            totalSteps={totalSteps}
+            installationComplete={installationComplete}
+            subdomain={subdomain}
+          />
+        </StaticDialog>
 
-            {/* <FlexBox
-              justifyContent="center"
-              direction="column"
-              style={{ maxWidth: 500, margin: "0 auto" }}
-            >
-              <Alert primary>
-                Upload a zip file containing your website. It must consist of
-                .html, .css, .js, font files, and/or image files.
-                <Spacer bottom="1rem"></Spacer>
-                <Text block color="white">
-                  If you are uploading a website made in Vue, React, Angular or
-                  other frontend framework, you must first BUILD your app, then
-                  zip the build folder (it must contain an index.html file), and
-                  then upload the zip file.
-                </Text>
-                <Spacer bottom="1rem" />
-                You will receive a custom subdomain on my server, for example:
-                <br />
-                your-app.mikolaj.dk
-                <Spacer bottom="1rem" />
-                Max file size: 30MB
-              </Alert>
-              {!!errors.length && (
-                <Alert error>
-                  <ul>
-                    {errors.map((error, index) => (
-                      <li key={index}>{error.error}</li>
-                    ))}
-                  </ul>
-                </Alert>
-              )}
-              <form
-                onSubmit={installApp}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                }}
-              >
-                <input
-                  type="file"
-                  onChange={(e) => setFile(e.target.files[0])}
-                />
-                <Spacer bottom="1rem" />
-                <SecondaryButton type="submit">Upload</SecondaryButton>
-              </form>
-
-
-            </FlexBox>*/}
-          </React.Fragment>
-        </div>
-      </div>
+      </Container>
     </React.Fragment>
   );
 }

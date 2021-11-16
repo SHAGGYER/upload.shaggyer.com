@@ -52,23 +52,20 @@ export class AppService {
           time++;
         }, 1000);
 
-        let lastText: string | undefined = "";
         const interval = setInterval(() => {
           let text: string | undefined = "Working...";
-          if (count === 200) {
+          if (count === 50) {
             clearInterval(interval);
             clearInterval(timeInterval);
             count = 0;
             socketServer.to(userId).emit("app-installation-done", subdomain);
+            socketServer.to(userId).emit("installation-progress", {
+              text: "Installed with success.",
+              count,
+              time,
+              intermediateStep: "Laravel app installed successfully",
+            });
             return;
-          }
-
-          if (text === "Working...") {
-            if (lastText === "Working...") {
-              text = undefined;
-            } else {
-              lastText = text;
-            }
           }
 
           count++;
@@ -77,9 +74,9 @@ export class AppService {
             text,
             count,
             time,
-            intermediateStep: "Laravel app installed successfully",
+            intermediateStep: "Installing",
           });
-        }, 50);
+        }, 200);
       }
     });
   }
