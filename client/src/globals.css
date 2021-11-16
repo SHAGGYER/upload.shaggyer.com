@@ -1,0 +1,230 @@
+/*@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.css");*/
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:wght@300;700&display=swap');
+
+@font-face {
+    font-family: "Gilroy-ExtraBold";
+    src: url("../public/fonts/Gilroy-ExtraBold.otf");
+    font-weight: bold;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Gilroy-Light";
+    src: url("../public/fonts/Gilroy-Light.otf");
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Pulse";
+    src: url("../public/fonts/Pulse.otf");
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "AVALEA";
+    src: url("../public/fonts/AVALEA_.otf");
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Aquero";
+    src: url("../public/fonts/Aquero.otf");
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Inkferno";
+    src: url("../public/fonts/Inkferno.otf");
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Quantify";
+    src: url("../public/fonts/Quantify.ttf");
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Casual";
+    src: url("../public/fonts/Casual.ttf");
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Blanka-Regular";
+    src: url("../public/fonts/Blanka-Regular.otf");
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Bitrate";
+    src: url("../public/fonts/Bitrate.ttf");
+    font-weight: 400;
+    font-display: swap;
+}
+
+:root {
+    --blue-primary: #2196f3;
+    --blue-dark: #1976d2;
+    --blue-light: #bbdefb;
+    --blue-accent: #448aff;
+
+    --green-primary: #4caf50;
+    --green-dark: #388e3c;
+    --green-light: #c8e6c9;
+    --green-accent: #4caf50;
+
+    --red-primary: #f44336;
+    --red-dark: #d32f2f;
+    --red-light: #ffcdd2;
+    --red-accent: #ff5252;
+    --red-secondary: #ff0000;
+
+    --orange-primary: #ff9800;
+    --orange-dark: #f57c00;
+    --orange-light: #ffe0b2;
+    --orange-accent: var(--orange-primary);
+
+    --blue-grey-primary: #607d8b;
+    --blue-grey-dark: #455a64;
+    --blue-grey-light: #cfd8dc;
+    --blue-grey-accent: var(--blue-grey-primary);
+
+    --pink-primary: #ff4081;
+    --pink-dark: #c2185b;
+    --pink-light: #f8bbd0;
+    --pink-accent: #ff4081;
+
+    --teal-primary: #009688;
+    --teal-dark: #00796b;
+    --teal-light: #b2dfdb;
+    --teal-accent: #009688;
+
+    --yellow-primary: #ffeb3b;
+    --yellow-dark: #fbc02d;
+    --yellow-light: #fff9c4;
+    --yellow-accent: var(--yellow-primary);
+
+    --purple-primary: #9c27b0;
+    --purple-dark: #7b1fa2;
+    --purple-light: #e1bee7;
+    --purple-accent: #7c4dff;
+
+    --primary-text: #212121;
+    --secondary-text: #757575;
+    --divider: #bdbdbd;
+
+    --primary: #0abead;
+    --secondary: #b2ae5e;
+    --secondary-light: #efefef;
+    --purple: #8540ff;
+    --yellow: #ffc50c;
+    --pink: #ec407a;
+    --dark-orange: #ff6331;
+    --blue: #13b6ff;
+    --green: #49af46;
+
+    --darkmode-primary: #1f2935;
+    --darkmode-primary-dark: #161d26;
+    --darkmode-primary-light: #95a5c6;
+}
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: "Gilroy-Light", sans-serif;
+    direction: ltr;
+}
+
+html,
+body,
+#__next {
+    width: 100%;
+    background-color: #F6F8F9;
+}
+
+html, body {
+}
+
+ul {
+    padding-left: 2rem;
+}
+
+span {
+    font-family: inherit;
+}
+
+/* Components */
+
+.ql-toolbar,
+.ql-editor {
+    background-color: white !important;
+}
+
+.Collapsible__trigger {
+    cursor: pointer;
+    font-weight: bold;
+    display: block;
+    width: 100%;
+    background-color: white;
+    padding: 1rem;
+}
+
+.Collapsible__contentInner {
+    display: block;
+    margin-top: 1rem;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    align-items: center;
+    list-style-type: none;
+}
+
+.pagination li {
+    margin-right: 0.5rem;
+    border: 1px solid #b2ae5e;
+    padding: 0.5rem;
+    cursor: pointer;
+}
+
+.pagination li a {
+    outline: none;
+    color: #b2ae5e;
+    text-decoration: none;
+}
+
+.pagination li:last-child {
+    margin-right: 0;
+}
+
+.pagination .disabled {
+    cursor: not-allowed;
+}
+
+.pagination .active {
+    font-weight: bold;
+    background-color: #ccc;
+}
+
+.max-w-900 {
+    max-width: 900px !important;
+}
+
+/* React-st-modal */
+.big-modal {
+    width: auto !important;
+    max-width: 700px !important;
+    border-radius: 7px !important;
+}

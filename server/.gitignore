@@ -1,0 +1,7 @@
+.idea
+.env
+uploads/*
+node_modules
+lessons/*
+dist/*
+user_files/*

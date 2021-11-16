@@ -1,0 +1,380 @@
+import shell from "shelljs";
+import util from "util";
+import fs from "fs";
+import getPort from "get-port";
+import randomWords from "random-words";
+import {injectable} from "inversify";
+import "reflect-metadata";
+import {spawnSync, spawn} from "child_process";
+
+const shellPromise = util.promisify(shell.exec);
+
+let userIds: string[] = [];
+let buildCommands: any[] = [];
+
+@injectable()
+export class AppService {
+  runIoServer(socket, socketServer) {
+    socket.on("join-user", (userId) => {
+      socket.join(userId);
+      userIds = userIds.filter((x) => x !== userId);
+      userIds.push(userId);
+    });
+
+    socket.on("user-terminate", (data) => {
+      const buildCommand = buildCommands.find((x) => x.userId === data.userId);
+      buildCommand.terminatedByUser = true;
+      buildCommand.child.kill();
+    });
+
+    socket.on("install-app", async ({app, userId}) => {
+      const subdomain = randomWords({exactly: 3, join: "-"});
+
+      if (process.env.NODE_ENV !== "dev") {
+        switch (app.conf.language) {
+          case "php":
+            await this.installLaravelAppDocker(
+              subdomain,
+              app.conf,
+              app.data,
+              socket,
+              socketServer,
+              userId
+            );
+            break;
+        }
+      } else {
+        let count = 0;
+        let time = 0;
+        const timeInterval = setInterval(() => {
+          time++;
+        }, 1000);
+
+        let lastText: string | undefined = "";
+        const interval = setInterval(() => {
+          let text: string | undefined = "Working...";
+          if (count === 200) {
+            clearInterval(interval);
+            clearInterval(timeInterval);
+            count = 0;
+            socketServer.to(userId).emit("app-installation-done", subdomain);
+            return;
+          }
+
+          if (text === "Working...") {
+            if (lastText === "Working...") {
+              text = undefined;
+            } else {
+              lastText = text;
+            }
+          }
+
+          console.log(text);
+
+          count++;
+
+          socketServer.to(userId).emit("installation-progress", {
+            text,
+            count,
+            time,
+            intermediateStep: "Laravel app installed successfully",
+          });
+        }, 50);
+      }
+    });
+  }
+
+  getPlainSubdomain = (subdomain) => {
+    return subdomain.split("-").join("");
+  };
+
+  async finish() {
+    if (process.env.NODE_ENV === "dev") return;
+
+    await shellPromise(`service nginx reload`);
+  }
+
+  async removeApp(app) {
+    if (process.env.NODE_ENV === "dev") return;
+    try {
+      const {type, subdomain} = app;
+      if (type === "mern") {
+        try {
+          await shellPromise(
+            `cd ${process.env.APPS_DIR}/${subdomain}/server && forever stop index.js`
+          );
+        } catch (error) {
+        }
+      }
+      await shellPromise(`rm -rf ${process.env.APPS_DIR}/${subdomain}`);
+      await shellPromise(`rm ${process.env.NGINX_SITES_DIR}/${subdomain}`);
+      await this.finish();
+    } catch (e) {
+      console.log(e.message);
+    }
+  }
+
+  installGithubRepo = (subdomain, {token, username, repo}) => {
+    if (process.env.NODE_ENV === "dev") return false;
+    const serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${subdomain}`;
+    const command = spawnSync(serverCommand, {shell: true});
+    if (command.stderr) {
+      return command.stderr.toString();
+    }
+    return command.stdout.toString();
+  };
+
+  installLaravelAppDocker = async (
+    subdomain,
+    {environmentVariables},
+    {token, username, repo},
+    socket,
+    socketServer,
+    userId
+  ) => {
+    this.installGithubRepo(subdomain, {token, username, repo});
+
+    const databaseName = subdomain.split("-").join("_");
+    const combinedName = `${username}-${repo}-${subdomain}`;
+    const port = await getPort();
+
+    let envArgs: string[] = [];
+    if (environmentVariables.trim()) {
+      environmentVariables.split("\n").forEach((line) => {
+        const [key, value] = line.split("=");
+        envArgs.push(`RUN echo "${key}=${value}" >> .env`);
+      });
+    }
+
+    const commands = [
+      "FROM miko1991/miko-php:v1",
+      `COPY ${combinedName}.gz .`,
+      `RUN sleep 1 && echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${combinedName}.gz -C . > /dev/null 2>&1`,
+      `RUN FILE=composer.json && if [ ! -e $FILE ]; then echo "File composer.json not found" && exit 3; fi;`,
+      `RUN LARAVEL_FRAMEWORK=$(grep -m1 laravel/framework composer.json || echo "") && \
+            if [ -z "$LARAVEL_FRAMEWORK" ]; \
+            then sleep 1 && echo "Could not find Laravel Framework" && exit 2; fi; \
+            PACKAGE_VERSION=$(echo $LARAVEL_FRAMEWORK | awk -F: '{ print $2 }' | sed 's/[", ]//g' | sed -E -e 's/(~|\\^|.\\*)//g') && \
+            echo "{PHP_STATUS=Verifying Laravel version...}" && \
+            if [ -z "$PACKAGE_VERSION" ]; \
+            then sleep 1 && echo "Could not detect Laravel version" && exit 2; \
+            else sleep 1 && echo "Detected Laravel Framework version: $PACKAGE_VERSION" && sleep 2; fi; \
+            if $(dpkg --compare-versions "$PACKAGE_VERSION" "lt" "7.2"); \
+            then echo "Your version of Laravel ($PACKAGE_VERSION) is below 7.2" && exit 2; fi`,
+      /*      "COPY . .",*/
+      "RUN chmod -R 777 storage/",
+
+      `RUN echo "{PHP_STATUS=Installing Laravel app...}" && sleep 1 && echo "Installing Laravel..." && composer install > /dev/null 2>&1`,
+      `RUN echo "{PHP_STATUS=Populating environment variables...}" && touch .env`,
+      `RUN echo "APP_KEY=" >> .env`,
+      `RUN echo "APP_ENV=dev" >> .env`,
+      `RUN echo "APP_URL=https://${subdomain}.mikol.ai" >> .env`,
+      `RUN echo "DB_CONNECTION=mysql" >> .env`,
+      `RUN echo "DB_HOST=mysql" >> .env`,
+      `RUN echo "DB_DATABASE=${databaseName}" >> .env`,
+      `RUN echo "DB_USERNAME=root" >> .env`,
+      `RUN echo "DB_PASSWORD=" >> .env`,
+      `RUN echo "DB_PORT=3306" >> .env`,
+      `RUN php artisan key:generate`,
+
+    ]
+
+    const steppableCommands = {
+      createDatabase: async () => {
+        spawnSync(
+          `docker exec -i mysql mysql <<< "create database ${databaseName};"`,
+          {shell: "/bin/bash"}
+        );
+      },
+      launchApp: async () => {
+        await shellPromise(
+          `docker run -d --name ${combinedName} -p ${port}:80 --network my-network ${combinedName}:v1`
+        );
+      },
+      migrateDatabase: async () => {
+        await shellPromise(
+          `docker exec -i ${combinedName} php artisan migrate --seed`
+        );
+      },
+    };
+
+    const totalSteps = commands.length + Object.keys(steppableCommands).length;
+    socketServer.to(userId).emit("installation-began", {totalSteps});
+
+    socketServer
+      .to(userId)
+      .emit("installation-progress", {intermediateStep: "Initializing..."});
+    await shellPromise(
+      `cd ${process.env.APPS_DIR} && mkdir ${combinedName} && cp ${combinedName}.gz ${combinedName}`
+    );
+
+    const serverContent = `
+server { 
+  listen 80; 
+  listen [::]:80; 
+  server_name ${subdomain}.mikol.ai; 
+  return 301 https://$host$request_uri; 
+}
+server {
+    listen 443 ssl; 
+    server_name ${subdomain}.mikol.ai; 
+    ssl_certificate /etc/letsencrypt/live/mikol.ai/fullchain.pem; 
+    ssl_certificate_key /etc/letsencrypt/live/mikol.ai/privkey.pem; 
+    include /etc/letsencrypt/options-ssl-nginx.conf; 
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; 
+    
+    location / {
+        proxy_pass http://localhost:${port};
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+`;
+    fs.writeFileSync(subdomain, serverContent);
+    await shellPromise(
+      `mv ${subdomain} ${process.env.NGINX_SITES_DIR}/${subdomain}`
+    );
+
+    const dockerFile = commands.join("\n");
+
+    const createDatabaseSh = `
+#!/bin/bash -ex
+docker exec -i mysql_container mysql <<< "create database ${databaseName}"`;
+
+    fs.writeFileSync(subdomain + "_Dockerfile", dockerFile);
+    await shellPromise(
+      `mv ${subdomain}_Dockerfile ${process.env.APPS_DIR}/${combinedName}/Dockerfile`
+    );
+
+    socketServer
+      .to(userId)
+      .emit("installation-progress", {intermediateStep: "Building..."});
+    const child = spawn(
+      `cd ${process.env.APPS_DIR}/${combinedName} && docker build -t ${combinedName}:v1 .`,
+      {shell: "/bin/bash"}
+    );
+    buildCommands.push({
+      child,
+      terminatedByUser: false,
+      userId: userId,
+    });
+
+    let count = 0;
+    let time = 0;
+    const timeInterval = setInterval(() => {
+      time++;
+      socketServer.to(userId).emit("installation-progress", {time});
+    }, 1000);
+    let interval = setInterval(() => {
+      socketServer
+        .to(userId)
+        .emit("installation-progress", {totalSteps, count});
+    }, 300);
+
+    let re = /{PHP_STATUS=(.*)}/i;
+    let lastText: string | undefined = undefined;
+    let texts: string[] = [];
+    child.stdout.on("data", (data) => {
+      let intermediateStep = "";
+      const strData = data.toString();
+      let text = strData;
+
+      if (strData.includes("Step")) {
+        count++;
+        text = undefined;
+      }
+
+      if (strData.includes("Running")) {
+        if (lastText === "Working...") {
+          text = undefined;
+        } else {
+          text = "Working...";
+        }
+      }
+      let found = strData.match(re);
+
+      if (found && found[1]) {
+        intermediateStep = found[1];
+        text = undefined;
+      }
+
+      if (text) {
+        lastText = text;
+      }
+
+      socketServer
+        .to(userId)
+        .emit("installation-progress", {text, count, intermediateStep});
+    });
+
+    const buildCommand = buildCommands.find((x) => x.userId === userId);
+    child.on("exit", async (code) => {
+      if (buildCommand && buildCommand.terminatedByUser) {
+        clearInterval(timeInterval);
+        clearInterval(interval);
+        spawnSync(
+          `cd ${process.env.APPS_DIR} && rm -rf ${combinedName} && rm ${combinedName}.gz`,
+          {shell: "/bin/bash"}
+        );
+        socketServer.to(userId).emit("installation-progress", {
+          intermediateStep: "Terminated by user...",
+          terminatedByUser: true,
+          text: "Terminated by user...",
+        });
+      } else if (code && code > 0) {
+        clearInterval(timeInterval);
+        clearInterval(interval);
+        spawnSync(
+          `cd ${process.env.APPS_DIR} && rm -rf ${combinedName} && rm ${combinedName}.gz`,
+          {shell: "/bin/bash"}
+        );
+        socketServer.to(userId).emit("installation-progress", {
+          intermediateStep: "Installation failed...",
+          text: "Sorry, installation failed.",
+          count,
+          time,
+          failed: true,
+        });
+      } else {
+        count++;
+        socketServer.to(userId).emit("installation-progress", {
+          intermediateStep: "Creating database...",
+          text: "Creating database...",
+          count,
+        });
+        await steppableCommands.createDatabase();
+
+        count++;
+        socketServer.to(userId).emit("installation-progress", {
+          intermediateStep: "Launching app...",
+          text: "Launching app...",
+          count,
+        });
+        await steppableCommands.launchApp();
+
+        count++;
+        socketServer.to(userId).emit("installation-progress", {
+          intermediateStep: "Migrating database...",
+          text: "Migrating database...",
+          count,
+        });
+        await steppableCommands.migrateDatabase();
+
+        socketServer.to(userId).emit("installation-progress", {
+          intermediateStep: "Finished successfully...",
+          text: "Finished successfully...",
+        });
+        await this.finish();
+        clearInterval(interval);
+        clearInterval(timeInterval);
+        socketServer.to(userId).emit("app-installation-done", subdomain);
+      }
+      buildCommands = buildCommands.filter((x) => x.userId !== userId);
+    });
+  };
+}
