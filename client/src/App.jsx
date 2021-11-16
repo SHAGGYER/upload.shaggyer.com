@@ -34,7 +34,7 @@ function MyApp() {
     if (githubUsername && githubAccessToken) {
       localStorage.setItem("githubAccessToken", githubAccessToken);
       localStorage.setItem("githubUsername", githubUsername)
-      window.location.reload()
+      window.location.href = "/"
     }
   }, [githubUsername, githubAccessToken]);
 
