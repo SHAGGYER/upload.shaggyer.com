@@ -285,7 +285,11 @@ docker exec -i mysql_container mysql <<< "create database ${databaseName}"`;
         text = undefined;
       }
 
-      if (strData.includes("Running") || strData.includes("Removing") || strData.includes("--->") || strData.includes("Successfully")) {
+      if (strData.includes("Running") ||
+        strData.includes("Removing") ||
+        strData.includes("--->") ||
+        strData.includes("Successfully") ||
+        strData.includes("Sending")) {
         if (lastText === "Working...") {
           text = undefined;
         } else {
