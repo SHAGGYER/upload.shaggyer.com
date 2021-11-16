@@ -78,39 +78,16 @@ exports.AppService = class {
     });
   }
 
-  getPlainSubdomain = (subdomain) => {
-    return subdomain.split("-").join("");
-  };
-
   async finish() {
     if (process.env.NODE_ENV === "dev") return;
 
     await shellPromise(`service nginx reload`);
   }
 
-  async removeApp(app) {
-    if (process.env.NODE_ENV === "dev") return;
-    try {
-      const {type, subdomain} = app;
-      if (type === "mern") {
-        try {
-          await shellPromise(
-            `cd ${process.env.APPS_DIR}/${subdomain}/server && forever stop index.js`
-          );
-        } catch (error) {
-        }
-      }
-      await shellPromise(`rm -rf ${process.env.APPS_DIR}/${subdomain}`);
-      await shellPromise(`rm ${process.env.NGINX_SITES_DIR}/${subdomain}`);
-      await this.finish();
-    } catch (e) {
-      console.log(e.message);
-    }
-  }
-
   installGithubRepo = (subdomain, {token, username, repo}) => {
     if (process.env.NODE_ENV === "dev") return false;
-    const serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${subdomain}`;
+/*    const serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${subdomain}`;*/
+    const serverCommand = `cd ${process.env.APPS_DIR} && curl -L -k -u ${token}:x-oauth-basic https://github.com/${username}/${repo}/tarball/master > ${username}-${repo}-${subdomain}.gz`
     const command = spawnSync(serverCommand, {shell: true});
     if (command.stderr) {
       return command.stderr.toString();
