@@ -316,13 +316,13 @@ export default function YourApps() {
     const app = {
       conf: result,
       data: {
-        token: localStorage.getItem("githubAccessToken"),
-        username: localStorage.getItem("githubUsername"),
+        token: githubAccessToken,
+        username: githubUserName,
         repo: repo.name,
       },
     };
 
-    socket.emit("install-app", {app});
+    socket.emit("install-app", {app, userId: githubUserName});
     setLoading(true);
     setProgressDialogOpen(true);
   };

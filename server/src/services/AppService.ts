@@ -5,7 +5,7 @@ import getPort from "get-port";
 import randomWords from "random-words";
 import {injectable} from "inversify";
 import "reflect-metadata";
-import {spawnSync, spawn} from "child_process";
+import {spawnSync, execSync, spawn} from "child_process";
 
 const shellPromise = util.promisify(shell.exec);
 
@@ -44,6 +44,8 @@ export class AppService {
             break;
         }
       } else {
+        console.log(userId)
+
         let count = 0;
         let time = 0;
         const timeInterval = setInterval(() => {
@@ -68,8 +70,6 @@ export class AppService {
               lastText = text;
             }
           }
-
-          console.log(text);
 
           count++;
 
@@ -377,4 +377,5 @@ docker exec -i mysql_container mysql <<< "create database ${databaseName}"`;
       buildCommands = buildCommands.filter((x) => x.userId !== userId);
     });
   };
+
 }
