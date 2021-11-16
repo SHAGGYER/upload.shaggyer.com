@@ -1,12 +1,9 @@
-import mongoose from "mongoose";
-import "reflect-metadata";
-import { injectable } from "inversify";
+const mongoose = require("mongoose");
 
-@injectable()
-export class Db {
+exports.Db = class {
   Connect() {
     mongoose.connect(
-      process.env.MONGODB_URI!,
+      process.env.MONGODB_URI,
       {
         useNewUrlParser: true,
         useUnifiedTopology: true,

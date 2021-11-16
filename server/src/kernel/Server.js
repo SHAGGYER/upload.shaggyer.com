@@ -1,25 +1,17 @@
-import express, { Application } from "express";
-import { Server as HttpServer } from "http";
-import bodyParser from "body-parser";
-import { Server as IOServer } from "socket.io";
-import { AppService } from "services/AppService";
-import cors from "cors";
-import path from "path";
-import routes from "../routes/index";
-import "reflect-metadata";
+const express = require("express");
+const bodyParser = require("body-parser");
+const io = require("socket.io");
+const { AppService } = require("../services/AppService");
+const cors = require("cors");
+const routes = require("../routes");
 const session = require("express-session");
-import passport from "passport";
+const passport = require("passport");
+const { Strategy } = require("passport-github2");
 
-import { inject, injectable } from "inversify";
-import { TYPES } from "../types.inversify";
-import { Strategy } from "passport-github2";
-
-@injectable()
-export class Server {
-  public app: Application;
-
-  constructor(@inject(TYPES.AppService) private appService: AppService) {
+exports.Server = class {
+  constructor() {
     this.app = express();
+    this.appService = new AppService();
   }
 
   setUpPassport() {
@@ -27,16 +19,16 @@ export class Server {
       done(null, user);
     });
 
-    passport.deserializeUser(function (obj: any, done) {
+    passport.deserializeUser(function (obj, done) {
       done(null, obj);
     });
 
     passport.use(
       new Strategy(
         {
-          clientID: process.env.GITHUB_CLIENT_ID!,
-          clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-          callbackURL: process.env.GITHUB_CALLBACK_URL!,
+          clientID: process.env.GITHUB_CLIENT_ID,
+          clientSecret: process.env.GITHUB_CLIENT_SECRET,
+          callbackURL: process.env.GITHUB_CALLBACK_URL,
         },
         async function (accessToken, refreshToken, profile, done) {
           /*   let user = await User.findOne({ email: profile.emails[0].value });
@@ -67,10 +59,10 @@ export class Server {
     this.loadRoutes();
 
     const PORT = process.env.NODE_PORT;
-    const server: HttpServer = this.app.listen(PORT, () =>
+    const server = this.app.listen(PORT, () =>
       console.log("Server started on port " + PORT)
     );
-    const socketServer = new IOServer(server);
+    const socketServer = io(server);
     socketServer.on("connection", (socket) => {
       this.appService.runIoServer(socket, socketServer);
     });
@@ -81,12 +73,9 @@ export class Server {
   }
 
   configureMiddleware() {
-    this.app.set("view engine", "ejs");
-    this.app.set("views", path.join(__dirname, "../..", "views"));
-
     this.app.use(cors());
     this.app.use(bodyParser.json());
-    this.app.use(session({secret: "secret"}))
+    this.app.use(session({secret: "amsldmasldmk1mk2dm12kdmk12mdk12mdk12"}))
     this.app.use(passport.initialize());
     this.app.use(passport.session());
   }

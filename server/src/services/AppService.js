@@ -1,19 +1,16 @@
-import shell from "shelljs";
-import util from "util";
-import fs from "fs";
-import getPort from "get-port";
-import randomWords from "random-words";
-import {injectable} from "inversify";
-import "reflect-metadata";
-import {spawnSync, execSync, spawn} from "child_process";
+const shell = require("shelljs");
+const util = require("util");
+const fs = require("fs");
+const getPort = require("get-port");
+const randomWords = require("random-words");
+const {spawnSync, spawn} = require("child_process")
 
 const shellPromise = util.promisify(shell.exec);
 
-let userIds: string[] = [];
-let buildCommands: any[] = [];
+let userIds = [];
+let buildCommands = [];
 
-@injectable()
-export class AppService {
+exports.AppService = class {
   runIoServer(socket, socketServer) {
     socket.on("join-user", (userId) => {
       socket.join(userId);
@@ -53,7 +50,7 @@ export class AppService {
         }, 1000);
 
         const interval = setInterval(() => {
-          let text: string | undefined = "Working...";
+          let text = "Working...";
           if (count === 50) {
             clearInterval(interval);
             clearInterval(timeInterval);
@@ -135,7 +132,7 @@ export class AppService {
     const combinedName = `${username}-${repo}-${subdomain}`;
     const port = await getPort();
 
-    let envArgs: string[] = [];
+    let envArgs = [];
     if (environmentVariables.trim()) {
       environmentVariables.split("\n").forEach((line) => {
         const [key, value] = line.split("=");
@@ -158,9 +155,7 @@ export class AppService {
             else sleep 1 && echo "Detected Laravel Framework version: $PACKAGE_VERSION" && sleep 2; fi; \
             if $(dpkg --compare-versions "$PACKAGE_VERSION" "lt" "7.2"); \
             then echo "Your version of Laravel ($PACKAGE_VERSION) is below 7.2" && exit 2; fi`,
-      /*      "COPY . .",*/
       "RUN chmod -R 777 storage/",
-
       `RUN echo "{PHP_STATUS=Installing Laravel app...}" && sleep 1 && echo "Installing Laravel..." && composer install > /dev/null 2>&1`,
       `RUN echo "{PHP_STATUS=Populating environment variables...}" && touch .env`,
       `RUN echo "APP_KEY=" >> .env`,
@@ -173,7 +168,6 @@ export class AppService {
       `RUN echo "DB_PASSWORD=" >> .env`,
       `RUN echo "DB_PORT=3306" >> .env`,
       `RUN php artisan key:generate`,
-
     ]
 
     const steppableCommands = {
@@ -239,10 +233,6 @@ server {
 
     const dockerFile = commands.join("\n");
 
-    const createDatabaseSh = `
-#!/bin/bash -ex
-docker exec -i mysql_container mysql <<< "create database ${databaseName}"`;
-
     fs.writeFileSync(subdomain + "_Dockerfile", dockerFile);
     await shellPromise(
       `mv ${subdomain}_Dockerfile ${process.env.APPS_DIR}/${combinedName}/Dockerfile`
@@ -274,7 +264,7 @@ docker exec -i mysql_container mysql <<< "create database ${databaseName}"`;
     }, 300);
 
     let re = /{PHP_STATUS=(.*)}/i;
-    let lastText: string | undefined = undefined;
+    let lastText = undefined;
     child.stdout.on("data", (data) => {
       let intermediateStep = "";
       const strData = data.toString();

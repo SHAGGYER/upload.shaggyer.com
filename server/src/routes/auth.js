@@ -1,6 +1,5 @@
-import {Router} from "express";
-import passport from "passport";
-
+const {Router} = require("express");
+const passport = require("passport");
 const router = Router();
 
 router.get(
@@ -15,12 +14,9 @@ router.get(
   passport.authenticate("github", {failureRedirect: "/login"}),
   function (req, res) {
     const user = req["user"];
-    console.log(user)
-
-    let redirectUrl = process.env.CLIENT_URL! + "?githubAccessToken=" + user.accessToken + "&githubUsername=" + user.profile.username;
-
+    let redirectUrl = process.env.CLIENT_URL + "?githubAccessToken=" + user.accessToken + "&githubUsername=" + user.profile.username;
     res.redirect(redirectUrl);
   }
 );
 
-export default router;
+module.exports = router;
