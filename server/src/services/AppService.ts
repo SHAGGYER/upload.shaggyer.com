@@ -168,7 +168,7 @@ export class AppService {
       `RUN echo "{PHP_STATUS=Populating environment variables...}" && touch .env`,
       `RUN echo "APP_KEY=" >> .env`,
       `RUN echo "APP_ENV=dev" >> .env`,
-      `RUN echo "APP_URL=https://${subdomain}.mikol.ai" >> .env`,
+      `RUN echo "APP_URL=https://${subdomain}.shaggyer.com" >> .env`,
       `RUN echo "DB_CONNECTION=mysql" >> .env`,
       `RUN echo "DB_HOST=mysql" >> .env`,
       `RUN echo "DB_DATABASE=${databaseName}" >> .env`,
@@ -212,14 +212,14 @@ export class AppService {
 server { 
   listen 80; 
   listen [::]:80; 
-  server_name ${subdomain}.mikol.ai; 
+  server_name ${subdomain}.shaggyer.com; 
   return 301 https://$host$request_uri; 
 }
 server {
     listen 443 ssl; 
-    server_name ${subdomain}.mikol.ai; 
-    ssl_certificate /etc/letsencrypt/live/mikol.ai/fullchain.pem; 
-    ssl_certificate_key /etc/letsencrypt/live/mikol.ai/privkey.pem; 
+    server_name ${subdomain}.shaggyer.com; 
+    ssl_certificate /etc/letsencrypt/live/shaggyer.com/fullchain.pem; 
+    ssl_certificate_key /etc/letsencrypt/live/shaggyer.com/privkey.pem; 
     include /etc/letsencrypt/options-ssl-nginx.conf; 
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; 
     
