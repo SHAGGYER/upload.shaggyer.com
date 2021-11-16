@@ -275,7 +275,6 @@ docker exec -i mysql_container mysql <<< "create database ${databaseName}"`;
 
     let re = /{PHP_STATUS=(.*)}/i;
     let lastText: string | undefined = undefined;
-    let texts: string[] = [];
     child.stdout.on("data", (data) => {
       let intermediateStep = "";
       const strData = data.toString();
@@ -286,7 +285,7 @@ docker exec -i mysql_container mysql <<< "create database ${databaseName}"`;
         text = undefined;
       }
 
-      if (strData.includes("Running") || strData.includes("Removing")) {
+      if (strData.includes("Running") || strData.includes("Removing") || strData.includes("--->") || strData.includes("Successfully")) {
         if (lastText === "Working...") {
           text = undefined;
         } else {
