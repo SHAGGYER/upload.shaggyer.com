@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "nodemon src/index.js",
-    "build": "tsc --project tsconfig.json.bak && tscpaths -p tsconfig.json.bak -s ./src -o ./dist",
+    "build": "tsc --project tsconfig.json && tscpaths -p tsconfig.json -s ./src -o ./dist",
     "install:geo": "npm i -g cross-env && cross-env MAXMIND_LICENSE_KEY=9ZJR8HBhzFW3gNTc yarn"
   },
   "nodemonConfig": {
