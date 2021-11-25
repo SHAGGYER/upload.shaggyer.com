@@ -103,7 +103,7 @@ exports.AppService = class {
     this.installGithubRepo(subdomain, {token, username, repo});
 
     const databaseName = subdomain.split("-").join("_");
-    const combinedName = `${username}-${repo}-${subdomain}`;
+    const combinedName = repo;
     const port = await getPort();
 
     let envArgs = [];
