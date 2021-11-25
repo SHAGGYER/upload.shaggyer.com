@@ -277,6 +277,7 @@ server {
     });
 
     const buildCommand = buildCommands.find((x) => x.userId === userId);
+    child.on("error", e => console.log(e));
     child.on("exit", async (code) => {
       if (buildCommand && buildCommand.terminatedByUser) {
         clearInterval(timeInterval);
