@@ -84,7 +84,7 @@ exports.AppService = class {
 
   installGithubRepo = (subdomain, {token, username, repo}) => {
     if (process.env.NODE_ENV === "dev") return false;
-    const serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo ${token} ${username} ${repo}`
+    const serverCommand = `cd ${process.env.APPS_DIR} && curl -L -k -u ${token}:x-oauth-basic https://github.com/${username}/${repo}/tarball/master > ${username}-${repo}-${subdomain}.gz`
     const command = spawnSync(serverCommand, {shell: true});
     if (command.stderr) {
       return command.stderr.toString();
@@ -117,7 +117,7 @@ exports.AppService = class {
     const commands = [
       "FROM miko1991/miko-php:v1",
       `COPY ${combinedName}.gz .`,
-      `RUN sleep 1 && echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${combinedName}.gz -C . > /dev/null 2>&1`,
+      `RUN sleep 1 && echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${combinedName}.gz -C .`,
       `RUN FILE=composer.json && if [ ! -e $FILE ]; then echo "File composer.json not found" && exit 3; fi;`,
       `RUN LARAVEL_FRAMEWORK=$(grep -m1 laravel/framework composer.json || echo "") && \
             if [ -z "$LARAVEL_FRAMEWORK" ]; \
