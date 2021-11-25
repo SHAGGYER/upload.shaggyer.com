@@ -209,7 +209,7 @@ server {
 
     fs.writeFileSync(subdomain + "_Dockerfile", dockerFile);
     await shellPromise(
-      `mv ${subdomain}_Dockerfile ${process.env.APPS_DIR}/${combinedName}/Dockerfile`
+      `mv ${subdomain}_Dockerfile ${process.env.APPS_DIR}/${combinedName}/Dockerfile`,
     );
 
     socketServer
@@ -294,10 +294,10 @@ server {
       } else if (code && code > 0) {
         clearInterval(timeInterval);
         clearInterval(interval);
-        spawnSync(
+      /*  spawnSync(
           `cd ${process.env.APPS_DIR} && rm -rf ${combinedName} && rm ${combinedName}.gz`,
           {shell: "/bin/bash"}
-        );
+        );*/
         socketServer.to(userId).emit("installation-progress", {
           intermediateStep: "Installation failed...",
           text: "Sorry, installation failed.",
