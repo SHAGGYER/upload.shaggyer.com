@@ -89,13 +89,8 @@ exports.AppService = class {
   installGithubRepo = (subdomain, {token, username, repo}) => {
     const tarballName = randomWords({exactly:  3, join: "_"})
     if (process.env.NODE_ENV === "dev") return false;
-/*
-    const serverCommand = `cd ${process.env.APPS_DIR} && curl --trace -H 'Authorization: token ${token}' -L https://api.github.com/repos/${username}/${repo}/tarball > ${tarballName}.gz`
-*/
     const serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${tarballName}`
     spawnSync(serverCommand, {shell: "/bin/bash"});
-    console.log(serverCommand);
-
     return tarballName
   };
 
@@ -124,7 +119,7 @@ exports.AppService = class {
       "FROM miko1991/miko-php:v1",
       "RUN sleep 2",
       `COPY ${tarballName}.gz .`,
-      `RUN echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${tarballName}.gz -C .`,
+      `RUN echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${tarballName}.gz -C . > /dev/null 2>&1`,
       `RUN FILE=composer.json && if [ ! -e $FILE ]; then echo "File composer.json not found" && exit 3; fi;`,
       `RUN LARAVEL_FRAMEWORK=$(grep -m1 laravel/framework composer.json || echo "") && \
             if [ -z "$LARAVEL_FRAMEWORK" ]; \
@@ -136,7 +131,6 @@ exports.AppService = class {
             else sleep 1 && echo "Detected Laravel Framework version: $PACKAGE_VERSION" && sleep 2; fi; \
             if $(dpkg --compare-versions "$PACKAGE_VERSION" "lt" "7.2"); \
             then echo "Your version of Laravel ($PACKAGE_VERSION) is below 7.2" && exit 2; fi`,
-
       "RUN chmod -R 777 storage/",
       `RUN echo "{PHP_STATUS=Installing Laravel app...}" && sleep 1 && echo "Installing Laravel..." && composer install > /dev/null 2>&1`,
       `RUN echo "{PHP_STATUS=Populating environment variables...}" && touch .env`,
