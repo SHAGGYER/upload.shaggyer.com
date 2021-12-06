@@ -95,7 +95,7 @@ exports.AppService = class {
    const serverCommand = `cd ${process.env.APPS_DIR} && sudo curl -H "Authorization: token ${token}" -L https://api.github.com/repos/${username}/${repo}/tarball > ${this.getPlainSubdomain(subdomain)}.tar.gz`
     const command = spawnSync(serverCommand, {shell: "/bin/bash"});
     if (command.stderr) {
-      console.log(command.stderr.toString());
+      console.log("error fetching repo", command.stderr.toString());
       return
     }
     return command.stdout.toString();
