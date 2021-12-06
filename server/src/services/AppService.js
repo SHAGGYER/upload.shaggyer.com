@@ -90,7 +90,7 @@ exports.AppService = class {
     const tarballName = randomWords({exactly:  3, join: "_"})
     if (process.env.NODE_ENV === "dev") return false;
     const serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${tarballName}`
-    const result = spawnSync(serverCommand, {shell: true});
+    const result = spawnSync(serverCommand, {shell: "/bin/bash"});
     if (result.error) {
       console.log(result.error)
     }
