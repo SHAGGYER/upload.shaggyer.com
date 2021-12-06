@@ -87,7 +87,7 @@ exports.AppService = class {
   }
 
   installGithubRepo = async (subdomain, {token, username, repo}) => {
-    const tarballName = randomWords({separator: "_"})
+    const tarballName = randomWords({exactly:  3, join: "_"})
     console.log(tarballName)
     if (process.env.NODE_ENV === "dev") return false;
     //console.log("command", `./get-github-repo.sh ${token} ${username} ${repo} ${this.getPlainSubdomain(subdomain)}`)
