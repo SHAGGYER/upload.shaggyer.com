@@ -89,7 +89,10 @@ exports.AppService = class {
   installGithubRepo = (subdomain, {token, username, repo}) => {
     const tarballName = randomWords({exactly:  3, join: "_"})
     if (process.env.NODE_ENV === "dev") return false;
+/*
     const serverCommand = `cd ${process.env.APPS_DIR} && curl --trace -H 'Authorization: token ${token}' -L https://api.github.com/repos/${username}/${repo}/tarball > ${tarballName}.gz`
+*/
+    const serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${username} ${repo} ${tarballName} ${token}`
     spawnSync(serverCommand, {shell: "/bin/bash"});
 
     return tarballName
