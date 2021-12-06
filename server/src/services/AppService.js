@@ -92,7 +92,7 @@ exports.AppService = class {
 /*
     let serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${this.getPlainSubdomain(subdomain)}`;
 */
-   const serverCommand = `cd ${process.env.APPS_DIR} && sudo curl --trace -H "Authorization: token ${token}" -L https://api.github.com/repos/${username}/${repo}/tarball > ${this.getPlainSubdomain(subdomain)}.tar.gz`
+   const serverCommand = `cd ${process.env.APPS_DIR} && sudo curl --trace -H 'Authorization: token ${token}' -L https://api.github.com/repos/${username}/${repo}/tarball > ${this.getPlainSubdomain(subdomain)}.tar.gz`
     await shellPromise(serverCommand);
   };
 
