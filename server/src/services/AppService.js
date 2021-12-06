@@ -88,11 +88,12 @@ exports.AppService = class {
 
   installGithubRepo = (subdomain, {token, username, repo}) => {
     if (process.env.NODE_ENV === "dev") return false;
+    console.log(token)
     let serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${this.getPlainSubdomain(subdomain)}`;
 /*
    const serverCommand = `cd ${process.env.APPS_DIR} && curl -H "Authorization: token ${token}" -L https://api.github.com/repos/godzilla/my_priv_repo/tarball > ${this.getPlainSubdomain(subdomain)}.tar.gz > ${this.getPlainSubdomain(subdomain)}.gz`
 */
-    const command = spawnSync(serverCommand, {shell: "/bin/bash"});
+    const command = spawnSync(serverCommand, {shell: "/bin/sh"});
     if (command.stderr) {
       console.log(command.stderr.toString());
       return
