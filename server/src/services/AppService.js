@@ -12,7 +12,7 @@ let buildCommands = [];
 
 exports.AppService = class {
   getPlainSubdomain(subdomain) {
-    return subdomain.replace("-", "_");
+    return subdomain.replace(/-/g, "_");
   }
 
   runIoServer(socket, socketServer) {
