@@ -87,14 +87,11 @@ exports.AppService = class {
   }
 
   installGithubRepo = (subdomain, {token, username, repo}) => {
-    const tarballName = randomWords({exactly:  2, join: "_"})
+    const tarballName = randomWords({exactly:  3, join: "_"})
     if (process.env.NODE_ENV === "dev") return false;
-    const serverCommand = `cd ${process.env.APPS_DIR} && source get-github-repo.sh ${token} ${username} ${repo} ${tarballName}`
-    const result = spawnSync(serverCommand, {shell: "/bin/bash"});
-    if (result.error) {
-      console.log(result.error)
-    }
-    console.log(serverCommand)
+    const serverCommand = `cd ${process.env.APPS_DIR} && curl --trace -H 'Authorization: token ${token}' -L https://api.github.com/repos/${username}/${repo}/tarball > ${tarballName}.gz`
+    spawnSync(serverCommand, {shell: "/bin/bash"});
+
     return tarballName
   };
 
@@ -107,7 +104,6 @@ exports.AppService = class {
     userId
   ) => {
     const tarballName = this.installGithubRepo(subdomain, {token, username, repo});
-    console.log(tarballName)
 
     const databaseName = subdomain.split("-").join("_");
     const port = await getPort();
@@ -122,6 +118,7 @@ exports.AppService = class {
 
     const commands = [
       "FROM miko1991/miko-php:v1",
+      "RUN sleep 2",
       `COPY ${tarballName}.gz .`,
       `RUN echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${tarballName}.gz -C .`,
       `RUN FILE=composer.json && if [ ! -e $FILE ]; then echo "File composer.json not found" && exit 3; fi;`,
