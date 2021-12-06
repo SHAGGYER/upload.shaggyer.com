@@ -86,13 +86,14 @@ exports.AppService = class {
     await shellPromise(`service nginx reload`);
   }
 
-  installGithubRepo = async (subdomain, {token, username, repo}) => {
+  installGithubRepo = (subdomain, {token, username, repo}) => {
     const tarballName = randomWords({exactly:  3, join: "_"})
-    console.log(tarballName)
     if (process.env.NODE_ENV === "dev") return false;
-    //console.log("command", `./get-github-repo.sh ${token} ${username} ${repo} ${this.getPlainSubdomain(subdomain)}`)
     const serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${tarballName}`
-    spawnSync(serverCommand)
+    const result = spawnSync(serverCommand)
+    if (result.error) {
+      console.log(result.error)
+    }
     return tarballName
   };
 
@@ -105,6 +106,7 @@ exports.AppService = class {
     userId
   ) => {
     const tarballName = this.installGithubRepo(subdomain, {token, username, repo});
+    console.log(tarballName)
 
     const databaseName = subdomain.split("-").join("_");
     const port = await getPort();
