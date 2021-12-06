@@ -108,7 +108,7 @@ exports.AppService = class {
     const tarballName = this.installGithubRepo(subdomain, {token, username, repo});
 
     const databaseName = subdomain.split("-").join("_");
-    const combinedName = tarballName
+    const tarballName = tarballName
     const port = await getPort();
 
     let envArgs = [];
@@ -159,12 +159,12 @@ exports.AppService = class {
       },
       launchApp: async () => {
         await shellPromise(
-          `docker run -d --name ${combinedName} -p ${port}:80 --network my-network ${combinedName}:v1`
+          `docker run -d --name ${tarballName} -p ${port}:80 --network my-network ${tarballName}:v1`
         );
       },
       migrateDatabase: async () => {
         await shellPromise(
-          `docker exec -i ${combinedName} php artisan migrate --seed`
+          `docker exec -i ${tarballName} php artisan migrate --seed`
         );
       },
     };
@@ -176,7 +176,7 @@ exports.AppService = class {
       .to(userId)
       .emit("installation-progress", {intermediateStep: "Initializing..."});
     await shellPromise(
-      `cd ${process.env.APPS_DIR} && mkdir ${combinedName} && cp ${tarballName}.gz ${combinedName}`
+      `cd ${process.env.APPS_DIR} && mkdir ${tarballName} && cp ${tarballName}.gz ${tarballName}`
     );
 
     const serverContent = `
@@ -215,14 +215,14 @@ server {
 
     fs.writeFileSync(subdomain + "_Dockerfile", dockerFile);
     await shellPromise(
-      `mv ${subdomain}_Dockerfile ${process.env.APPS_DIR}/${combinedName}/Dockerfile`,
+      `mv ${subdomain}_Dockerfile ${process.env.APPS_DIR}/${tarballName}/Dockerfile`,
     );
 
     socketServer
       .to(userId)
       .emit("installation-progress", {intermediateStep: "Building..."});
     const child = spawn(
-      `cd ${process.env.APPS_DIR}/${combinedName} && docker build -t ${combinedName}:v1 .`,
+      `cd ${process.env.APPS_DIR}/${tarballName} && docker build -t ${tarballName}:v1 .`,
       {shell: "/bin/bash"}
     );
     buildCommands.push({
@@ -289,7 +289,7 @@ server {
         clearInterval(timeInterval);
         clearInterval(interval);
         spawnSync(
-          `cd ${process.env.APPS_DIR} && rm -rf ${combinedName} && rm ${combinedName}.gz`,
+          `cd ${process.env.APPS_DIR} && rm -rf ${tarballName} && rm ${tarballName}.gz`,
           {shell: "/bin/bash"}
         );
         socketServer.to(userId).emit("installation-progress", {
@@ -301,7 +301,7 @@ server {
         clearInterval(timeInterval);
         clearInterval(interval);
       /*  spawnSync(
-          `cd ${process.env.APPS_DIR} && rm -rf ${combinedName} && rm ${combinedName}.gz`,
+          `cd ${process.env.APPS_DIR} && rm -rf ${tarballName} && rm ${tarballName}.gz`,
           {shell: "/bin/bash"}
         );*/
         socketServer.to(userId).emit("installation-progress", {
