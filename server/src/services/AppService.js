@@ -86,14 +86,14 @@ exports.AppService = class {
     await shellPromise(`service nginx reload`);
   }
 
-  installGithubRepo = (subdomain, {token, username, repo}) => {
+  installGithubRepo = async (subdomain, {token, username, repo}) => {
     if (process.env.NODE_ENV === "dev") return false;
     console.log(token)
 /*
     let serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${this.getPlainSubdomain(subdomain)}`;
 */
-   const serverCommand = `cd ${process.env.APPS_DIR} && sudo curl --trace -H "Authorization: token ${token}" -OL https://api.github.com/repos/${username}/${repo}/tarball > ${this.getPlainSubdomain(subdomain)}.tar.gz`
-    const command = spawnSync(serverCommand);
+   const serverCommand = `cd ${process.env.APPS_DIR} && sudo curl --trace -H "Authorization: token ${token}" -L https://api.github.com/repos/${username}/${repo}/tarball > ${this.getPlainSubdomain(subdomain)}.tar.gz`
+    await shellPromise(serverCommand);
   };
 
   installLaravelAppDocker = async (
