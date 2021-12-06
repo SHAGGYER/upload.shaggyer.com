@@ -121,9 +121,9 @@ exports.AppService = class {
     const commands = [
       "FROM miko1991/miko-php:v1",
       `COPY ${tarballName}.gz .`,
-      `RUN echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${tarballName}.tar.gz -C .`,
-/*      `RUN FILE=composer.json && if [ ! -e $FILE ]; then echo "File composer.json not found" && exit 3; fi;`,*/
-/*      `RUN LARAVEL_FRAMEWORK=$(grep -m1 laravel/framework composer.json || echo "") && \
+      `RUN echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${tarballName}.gz -C .`,
+      `RUN FILE=composer.json && if [ ! -e $FILE ]; then echo "File composer.json not found" && exit 3; fi;`,
+      `RUN LARAVEL_FRAMEWORK=$(grep -m1 laravel/framework composer.json || echo "") && \
             if [ -z "$LARAVEL_FRAMEWORK" ]; \
             then sleep 1 && echo "Could not find Laravel Framework" && exit 2; fi; \
             PACKAGE_VERSION=$(echo $LARAVEL_FRAMEWORK | awk -F: '{ print $2 }' | sed 's/[", ]//g' | sed -E -e 's/(~|\\^|.\\*)//g') && \
@@ -132,7 +132,7 @@ exports.AppService = class {
             then sleep 1 && echo "Could not detect Laravel version" && exit 2; \
             else sleep 1 && echo "Detected Laravel Framework version: $PACKAGE_VERSION" && sleep 2; fi; \
             if $(dpkg --compare-versions "$PACKAGE_VERSION" "lt" "7.2"); \
-            then echo "Your version of Laravel ($PACKAGE_VERSION) is below 7.2" && exit 2; fi`,*/
+            then echo "Your version of Laravel ($PACKAGE_VERSION) is below 7.2" && exit 2; fi`,
 
       "RUN chmod -R 777 storage/",
       `RUN echo "{PHP_STATUS=Installing Laravel app...}" && sleep 1 && echo "Installing Laravel..." && composer install > /dev/null 2>&1`,
