@@ -104,7 +104,7 @@ exports.AppService = class {
     socketServer,
     userId
   ) => {
-    const tarballName = await this.installGithubRepo(subdomain, {token, username, repo});
+    const tarballName = this.installGithubRepo(subdomain, {token, username, repo});
 
     const databaseName = subdomain.split("-").join("_");
     const port = await getPort();
