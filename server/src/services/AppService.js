@@ -94,11 +94,6 @@ exports.AppService = class {
 */
    const serverCommand = `cd ${process.env.APPS_DIR} && sudo curl --trace -H "Authorization: token ${token}" -OL https://api.github.com/repos/${username}/${repo}/tarball > ${this.getPlainSubdomain(subdomain)}.tar.gz`
     const command = spawnSync(serverCommand);
-    if (command.stderr) {
-      console.log("error fetching repo", command.stderr.toString());
-      return
-    }
-    return command.stdout.toString();
   };
 
   installLaravelAppDocker = async (
