@@ -87,13 +87,14 @@ exports.AppService = class {
   }
 
   installGithubRepo = async (subdomain, {token, username, repo}) => {
+    const tarballName = randomWords({separator: "_"})
+
     if (process.env.NODE_ENV === "dev") return false;
-    console.log("command", `./get-github-repo.sh ${token} ${username} ${repo} ${this.getPlainSubdomain(subdomain)}`)
-    let serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${this.getPlainSubdomain(subdomain)}`;
-/*
-   const serverCommand = `cd ${process.env.APPS_DIR} && sudo curl --trace -H 'Authorization: token ${token}' -L https://api.github.com/repos/${username}/${repo}/tarball > ${this.getPlainSubdomain(subdomain)}.tar.gz`
-*/
+    //console.log("command", `./get-github-repo.sh ${token} ${username} ${repo} ${this.getPlainSubdomain(subdomain)}`)
+    const serverCommand = `cd ${process.env.APPS_DIR} && curl --trace -H 'Authorization: token ${token}' -L https://api.github.com/repos/${username}/${repo}/tarball > ${tarballName}.gz`
     await shellPromise(serverCommand);
+
+    return tarballName
   };
 
   installLaravelAppDocker = async (
@@ -104,10 +105,10 @@ exports.AppService = class {
     socketServer,
     userId
   ) => {
-    this.installGithubRepo(subdomain, {token, username, repo});
+    const tarballName = this.installGithubRepo(subdomain, {token, username, repo});
 
     const databaseName = subdomain.split("-").join("_");
-    const combinedName = repo + "-" + username + "-" + subdomain;
+    const combinedName = tarballName
     const port = await getPort();
 
     let envArgs = [];
