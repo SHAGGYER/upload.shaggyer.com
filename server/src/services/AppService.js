@@ -133,6 +133,7 @@ exports.AppService = class {
             else sleep 1 && echo "Detected Laravel Framework version: $PACKAGE_VERSION" && sleep 2; fi; \
             if $(dpkg --compare-versions "$PACKAGE_VERSION" "lt" "7.2"); \
             then echo "Your version of Laravel ($PACKAGE_VERSION) is below 7.2" && exit 2; fi`,*/
+
       "RUN chmod -R 777 storage/",
       `RUN echo "{PHP_STATUS=Installing Laravel app...}" && sleep 1 && echo "Installing Laravel..." && composer install > /dev/null 2>&1`,
       `RUN echo "{PHP_STATUS=Populating environment variables...}" && touch .env`,
