@@ -171,7 +171,7 @@ exports.AppService = class {
       .to(userId)
       .emit("installation-progress", {intermediateStep: "Initializing..."});
     await shellPromise(
-      `cd ${process.env.APPS_DIR} && mkdir ${combinedName} && cp ${combinedName}.gz ${combinedName}`
+      `cd ${process.env.APPS_DIR} && mkdir ${combinedName} && cp ${subdomain}.gz ${subdomain}`
     );
 
     const serverContent = `
