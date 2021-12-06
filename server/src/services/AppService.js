@@ -92,8 +92,9 @@ exports.AppService = class {
 /*
     const serverCommand = `cd ${process.env.APPS_DIR} && curl --trace -H 'Authorization: token ${token}' -L https://api.github.com/repos/${username}/${repo}/tarball > ${tarballName}.gz`
 */
-    const serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${username} ${repo} ${tarballName} ${token}`
+    const serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${tarballName}`
     spawnSync(serverCommand, {shell: "/bin/bash"});
+    console.log(serverCommand);
 
     return tarballName
   };
