@@ -88,11 +88,12 @@ exports.AppService = class {
 
   installGithubRepo = (subdomain, {token, username, repo}) => {
     if (process.env.NODE_ENV === "dev") return false;
-    let serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${this.getPlainSubdomain(subdomain)}`;
-   /* const serverCommand = `cd ${process.env.APPS_DIR} && curl -L -k -u ${token}:x-oauth-basic https://github.com/${username}/${repo}/tarball/master > ${repo}.gz`*/
+/*    let serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${this.getPlainSubdomain(subdomain)}`;*/
+   const serverCommand = `cd ${process.env.APPS_DIR} && curl -L -k -u ${token}:x-oauth-basic https://github.com/${username}/${repo}/tarball/master > ${this.getPlainSubdomain(subdomain)}.gz`
     const command = spawnSync(serverCommand, {shell: "/bin/bash"});
     if (command.stderr) {
-      return command.stderr.toString();
+      console.log(command.stderr.toString());
+      return
     }
     return command.stdout.toString();
   };
