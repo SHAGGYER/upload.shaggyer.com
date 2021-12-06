@@ -117,7 +117,7 @@ exports.AppService = class {
 
     const commands = [
       "FROM miko1991/miko-php:v1",
-      `COPY ${combinedName}.gz .`,
+      `COPY ${subdomain}.gz .`,
       `RUN sleep 1 && echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${subdomain}.gz -C .`,
       `RUN FILE=composer.json && if [ ! -e $FILE ]; then echo "File composer.json not found" && exit 3; fi;`,
       `RUN LARAVEL_FRAMEWORK=$(grep -m1 laravel/framework composer.json || echo "") && \
