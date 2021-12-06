@@ -11,6 +11,10 @@ let userIds = [];
 let buildCommands = [];
 
 exports.AppService = class {
+  getPlainSubdomain(subdomain) {
+    return subdomain.replace("-", "_");
+  }
+
   runIoServer(socket, socketServer) {
     socket.on("join-user", (userId) => {
       socket.join(userId);
@@ -84,7 +88,7 @@ exports.AppService = class {
 
   installGithubRepo = (subdomain, {token, username, repo}) => {
     if (process.env.NODE_ENV === "dev") return false;
-    let serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${subdomain}`;
+    let serverCommand = `cd ${process.env.APPS_DIR} && ./get-github-repo.sh ${token} ${username} ${repo} ${this.getPlainSubdomain(subdomain)}`;
    /* const serverCommand = `cd ${process.env.APPS_DIR} && curl -L -k -u ${token}:x-oauth-basic https://github.com/${username}/${repo}/tarball/master > ${repo}.gz`*/
     const command = spawnSync(serverCommand, {shell: "/bin/bash"});
     if (command.stderr) {
@@ -117,8 +121,8 @@ exports.AppService = class {
 
     const commands = [
       "FROM miko1991/miko-php:v1",
-      `COPY ${subdomain}.gz .`,
-      `RUN sleep 1 && echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${subdomain}.gz -C .`,
+      `COPY ${this.getPlainSubdomain(subdomain)}.gz .`,
+      `RUN sleep 1 && echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${this.getPlainSubdomain(subdomain)}.gz -C .`,
       `RUN FILE=composer.json && if [ ! -e $FILE ]; then echo "File composer.json not found" && exit 3; fi;`,
       `RUN LARAVEL_FRAMEWORK=$(grep -m1 laravel/framework composer.json || echo "") && \
             if [ -z "$LARAVEL_FRAMEWORK" ]; \
