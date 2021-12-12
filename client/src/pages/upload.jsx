@@ -419,7 +419,8 @@ export default function YourApps() {
       username: githubUserName,
       repo: repo.name,
       laravelVersion: result.laravelVersion,
-      environmentVariables: result.environmentVariables
+      environmentVariables: result.environmentVariables,
+      language: result.language
     };
 
     socket.emit("install-app", {app, userId: githubUserName});
