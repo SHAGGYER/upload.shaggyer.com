@@ -223,11 +223,13 @@ const RepoDialog = ({repo}) => {
 
 
   const [environmentVariables, setEnvironmentVariables] = useState("");
+  const [laravelVersion, setLaravelVersion] = useState("");
 
   const installPhpApp = () => {
     dialog.close({
       environmentVariables,
       language: "php",
+      laravelVersion
     });
   };
 
@@ -235,11 +237,23 @@ const RepoDialog = ({repo}) => {
     <EnvVarsContainer style={{padding: "1rem"}}>
       {repo.language && repo.language === "PHP" && (
         <React.Fragment>
-          <textarea
-  name="environmentVariables"
-  placeholder="Extra Environment Variables"
-  onChange={(e) => setEnvironmentVariables(e.target.value)}
-  />
+          <div>
+            <label>Laravel Version</label>
+            <select style={{width: "100%", padding: "0.5rem"}} value={laravelVersion} onChange={e => setLaravelVersion(e.target.value)}>
+              <option value="7">7</option>
+              <option value="8">8</option>
+            </select>
+          </div>
+          <br/>
+          <div>
+            <label>Environment Variables</label>
+            <textarea
+              name="environmentVariables"
+              placeholder="Extra Environment Variables"
+              onChange={(e) => setEnvironmentVariables(e.target.value)}
+            />
+          </div>
+
 
           <button onClick={() => installPhpApp()}>
             Install
@@ -398,12 +412,11 @@ export default function YourApps() {
     }
 
     const app = {
-      conf: result,
-      data: {
-        token: githubAccessToken,
-        username: githubUserName,
-        repo: repo.name,
-      },
+      token: githubAccessToken,
+      username: githubUserName,
+      repo: repo.name,
+      laravelVersion: result.laravelVersion,
+      environmentVariables: result.environmentVariables
     };
 
     socket.emit("install-app", {app, userId: githubUserName});

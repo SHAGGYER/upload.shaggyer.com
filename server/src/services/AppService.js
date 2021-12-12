@@ -11,10 +11,6 @@ let userIds = [];
 let buildCommands = [];
 
 exports.AppService = class {
-  getPlainSubdomain(subdomain) {
-    return subdomain.replace(/-/g, "_");
-  }
-
   runIoServer(socket, socketServer) {
     socket.on("join-user", (userId) => {
       socket.join(userId);
@@ -36,8 +32,7 @@ exports.AppService = class {
           case "php":
             await this.installLaravelAppDocker(
               subdomain,
-              app.conf,
-              app.data,
+              app,
               socket,
               socketServer,
               userId
@@ -96,11 +91,11 @@ exports.AppService = class {
 
   installLaravelAppDocker = async (
     subdomain,
-    {environmentVariables},
-    {token, username, repo},
+    {token, username, repo, laravelVersion, environmentVariables},
     socket,
     socketServer,
-    userId
+    userId,
+
   ) => {
     const tarballName = this.installGithubRepo(subdomain, {token, username, repo});
 
@@ -115,12 +110,15 @@ exports.AppService = class {
       });
     }
 
-    const commands = [
-      "FROM miko1991/miko-php:v1",
-      `COPY ${tarballName}.gz .`,
-      `RUN echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${tarballName}.gz -C . > /dev/null 2>&1`,
-      `RUN FILE=composer.json && if [ ! -e $FILE ]; then echo "File composer.json not found" && exit 3; fi;`,
-      `RUN LARAVEL_FRAMEWORK=$(grep -m1 laravel/framework composer.json || echo "") && \
+    let commands = []
+
+    if (laravelVersion === 7) {
+      commands = [
+        "FROM miko1991/miko-php:v1",
+        `COPY ${tarballName}.gz .`,
+        `RUN echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${tarballName}.gz -C . > /dev/null 2>&1`,
+        `RUN FILE=composer.json && if [ ! -e $FILE ]; then echo "File composer.json not found" && exit 3; fi;`,
+        `RUN LARAVEL_FRAMEWORK=$(grep -m1 laravel/framework composer.json || echo "") && \
             if [ -z "$LARAVEL_FRAMEWORK" ]; \
             then sleep 1 && echo "Could not find Laravel Framework" && exit 2; fi; \
             PACKAGE_VERSION=$(echo $LARAVEL_FRAMEWORK | awk -F: '{ print $2 }' | sed 's/[", ]//g' | sed -E -e 's/(~|\\^|.\\*)//g') && \
@@ -130,20 +128,33 @@ exports.AppService = class {
             else sleep 1 && echo "Detected Laravel Framework version: $PACKAGE_VERSION" && sleep 2; fi; \
             if $(dpkg --compare-versions "$PACKAGE_VERSION" "lt" "7.2.5"); \
             then echo "Your version of Laravel ($PACKAGE_VERSION) is below 7.2.5" && exit 2; fi`,
-      "RUN chmod -R 777 storage/",
-      `RUN echo "{PHP_STATUS=Installing Laravel app...}" && sleep 1 && echo "Installing Laravel..." && composer install > /dev/null 2>&1`,
-      `RUN echo "{PHP_STATUS=Populating environment variables...}" && touch .env`,
-      `RUN echo "APP_KEY=" >> .env`,
-      `RUN echo "APP_ENV=dev" >> .env`,
-      `RUN echo "APP_URL=https://${subdomain}.shaggyer.com" >> .env`,
-      `RUN echo "DB_CONNECTION=mysql" >> .env`,
-      `RUN echo "DB_HOST=mysql" >> .env`,
-      `RUN echo "DB_DATABASE=${databaseName}" >> .env`,
-      `RUN echo "DB_USERNAME=root" >> .env`,
-      `RUN echo "DB_PASSWORD=" >> .env`,
-      `RUN echo "DB_PORT=3306" >> .env`,
-      `RUN php artisan key:generate`,
-    ]
+        "RUN chmod -R 777 storage/",
+        `RUN echo "{PHP_STATUS=Installing Laravel app...}" && sleep 1 && echo "Installing Laravel..." && composer install > /dev/null 2>&1`,
+        `RUN echo "{PHP_STATUS=Populating environment variables...}" && touch .env`,
+        `RUN echo "APP_KEY=" >> .env`,
+        `RUN echo "APP_ENV=dev" >> .env`,
+        `RUN echo "APP_URL=https://${subdomain}.shaggyer.com" >> .env`,
+        `RUN echo "DB_CONNECTION=mysql" >> .env`,
+        `RUN echo "DB_HOST=mysql" >> .env`,
+        `RUN echo "DB_DATABASE=${databaseName}" >> .env`,
+        `RUN echo "DB_USERNAME=root" >> .env`,
+        `RUN echo "DB_PASSWORD=" >> .env`,
+        `RUN echo "DB_PORT=3306" >> .env`,
+        `RUN php artisan key:generate`,
+      ]
+    } else if (laravelVersion === 8) {
+      commands = [
+        "FROM miko-php-8:v1",
+        `COPY ${tarballName}.gz .`,
+        `RUN echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${tarballName}.gz -C . > /dev/null 2>&1`,
+        `RUN FILE=composer.json && if [ ! -e $FILE ]; then echo "File composer.json not found" && exit 3; fi;`,
+        "RUN chmod -R 777 storage/",
+        "RUN composer install --optimize-autoloader --no-dev",
+        "RUN cd /var/www/ && cp .env.example .env && php artisan key:generate",
+        "EXPOSE 80",
+        `ENTRYPOINT ["/var/www/docker/run.sh"]`
+      ]
+    }
 
     const steppableCommands = {
       createDatabase: async () => {
