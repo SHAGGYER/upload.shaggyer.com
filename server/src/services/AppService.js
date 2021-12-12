@@ -154,6 +154,15 @@ exports.AppService = class {
         "RUN chmod -R 777 /var/www/storage/",
         "RUN composer install --optimize-autoloader --no-dev",
         "RUN cd /var/www/ && cp .env.example .env && php artisan key:generate",
+        `RUN echo "APP_KEY=" >> .env`,
+        `RUN echo "APP_ENV=dev" >> .env`,
+        `RUN echo "APP_URL=https://${subdomain}.shaggyer.com" >> .env`,
+        `RUN echo "DB_CONNECTION=mysql" >> .env`,
+        `RUN echo "DB_HOST=mysql" >> .env`,
+        `RUN echo "DB_DATABASE=${databaseName}" >> .env`,
+        `RUN echo "DB_USERNAME=root" >> .env`,
+        `RUN echo "DB_PASSWORD=" >> .env`,
+        `RUN echo "DB_PORT=3306" >> .env`,
         "EXPOSE 80",
         `ENTRYPOINT ["/var/www/docker/run.sh"]`
       ]
