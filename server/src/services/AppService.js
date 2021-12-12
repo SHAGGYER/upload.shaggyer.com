@@ -28,7 +28,7 @@ exports.AppService = class {
       const subdomain = randomWords({exactly: 3, join: "-"});
 
       if (process.env.NODE_ENV !== "dev") {
-        switch (app.conf.language) {
+        switch (app.language) {
           case "php":
             await this.installLaravelAppDocker(
               subdomain,
@@ -102,13 +102,13 @@ exports.AppService = class {
     const databaseName = subdomain.split("-").join("_");
     const port = await getPort();
 
-    let envArgs = [];
+/*    let envArgs = [];
     if (environmentVariables.trim()) {
       environmentVariables.split("\n").forEach((line) => {
         const [key, value] = line.split("=");
         envArgs.push(`RUN echo "${key}=${value}" >> .env`);
       });
-    }
+    }*/
 
     let commands = []
 
