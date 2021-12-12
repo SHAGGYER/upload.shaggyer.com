@@ -151,7 +151,7 @@ exports.AppService = class {
         `COPY ${tarballName}.gz .`,
         `RUN echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${tarballName}.gz -C . > /dev/null 2>&1`,
         `RUN FILE=composer.json && if [ ! -e $FILE ]; then echo "File composer.json not found" && exit 3; fi;`,
-        "RUN chmod -R 777 storage/",
+        "RUN chmod -R 777 /var/www/storage/",
         "RUN composer install --optimize-autoloader --no-dev",
         "RUN cd /var/www/ && cp .env.example .env && php artisan key:generate",
         "EXPOSE 80",
