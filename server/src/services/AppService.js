@@ -145,7 +145,7 @@ exports.AppService = class {
         `RUN echo "DB_PORT=3306" >> .env`,
         `RUN php artisan key:generate`,
       ]
-    } else if (laravelVersion == "7") {
+    } else if (laravelVersion == "8") {
       commands = [
         "FROM miko-php-8:v1",
         `COPY ${tarballName}.gz .`,
