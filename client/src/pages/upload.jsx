@@ -226,6 +226,8 @@ const RepoDialog = ({repo}) => {
   const [laravelVersion, setLaravelVersion] = useState("");
 
   const installPhpApp = () => {
+    if (!laravelVersion) return;
+
     dialog.close({
       environmentVariables,
       language: "php",
@@ -240,6 +242,7 @@ const RepoDialog = ({repo}) => {
           <div>
             <label>Laravel Version</label>
             <select style={{width: "100%", padding: "0.5rem"}} value={laravelVersion} onChange={e => setLaravelVersion(e.target.value)}>
+              <option value="">Choose One</option>
               <option value="7">7</option>
               <option value="8">8</option>
             </select>
