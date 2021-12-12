@@ -27,8 +27,6 @@ exports.AppService = class {
     socket.on("install-app", async ({app, userId}) => {
       const subdomain = randomWords({exactly: 3, join: "-"});
 
-      console.log(app.laravelVersion)
-
       if (process.env.NODE_ENV !== "dev") {
         switch (app.language) {
           case "php":
@@ -93,7 +91,7 @@ exports.AppService = class {
 
   installLaravelAppDocker = async (
     subdomain,
-    {token, username, repo, laravelVersion, environmentVariables},
+    {token, username, repo, phpVersion, environmentVariables},
     socket,
     socketServer,
     userId,
@@ -115,7 +113,7 @@ exports.AppService = class {
 
     let commands = []
 
-    if (laravelVersion == "7") {
+    if (phpVersion === "7") {
       commands = [
         "FROM miko1991/miko-php:v1",
         `COPY ${tarballName}.gz .`,
@@ -123,7 +121,7 @@ exports.AppService = class {
         `RUN FILE=composer.json && if [ ! -e $FILE ]; then echo "File composer.json not found" && exit 3; fi;`,
         `RUN LARAVEL_FRAMEWORK=$(grep -m1 laravel/framework composer.json || echo "") && \
             if [ -z "$LARAVEL_FRAMEWORK" ]; \
-            then sleep 1 && echo "Could not find Laravel Framework" && exit 2; fi; \
+            then sleep 1 && echo "Could not detect Laravel Framework" && exit 2; fi; \
             PACKAGE_VERSION=$(echo $LARAVEL_FRAMEWORK | awk -F: '{ print $2 }' | sed 's/[", ]//g' | sed -E -e 's/(~|\\^|.\\*)//g') && \
             echo "{PHP_STATUS=Verifying Laravel version...}" && \
             if [ -z "$PACKAGE_VERSION" ]; \
@@ -145,11 +143,21 @@ exports.AppService = class {
         `RUN echo "DB_PORT=3306" >> .env`,
         `RUN php artisan key:generate`,
       ]
-    } else if (laravelVersion == "8") {
+    } else if (phpVersion === "8") {
       commands = [
-        "FROM miko-php-8:v1",
+        "FROM miko1991/miko-php-8:v1",
         `COPY ${tarballName}.gz .`,
         `RUN echo "Unpacking files..." && bsdtar --strip-components=1 -xvf ${tarballName}.gz -C . > /dev/null 2>&1`,
+        `RUN LARAVEL_FRAMEWORK=$(grep -m1 laravel/framework composer.json || echo "") && \
+            if [ -z "$LARAVEL_FRAMEWORK" ]; \
+            then sleep 1 && echo "Could not detect Laravel Framework" && exit 2; fi; \
+            PACKAGE_VERSION=$(echo $LARAVEL_FRAMEWORK | awk -F: '{ print $2 }' | sed 's/[", ]//g' | sed -E -e 's/(~|\\^|.\\*)//g') && \
+            echo "{PHP_STATUS=Verifying Laravel version...}" && \
+            if [ -z "$PACKAGE_VERSION" ]; \
+            then sleep 1 && echo "Could not detect Laravel version" && exit 2; \
+            else sleep 1 && echo "Detected Laravel Framework version: $PACKAGE_VERSION" && sleep 2; fi; \
+            if $(dpkg --compare-versions "$PACKAGE_VERSION" "lt" "7.2.5"); \
+            then echo "Your version of Laravel ($PACKAGE_VERSION) is below 7.2.5" && exit 2; fi`,
         `RUN FILE=composer.json && if [ ! -e $FILE ]; then echo "File composer.json not found" && exit 3; fi;`,
         "RUN chmod -R 777 storage",
         `RUN echo "{PHP_STATUS=Installing Laravel app...}" && sleep 1 && echo "Installing Laravel..." && composer install > /dev/null 2>&1`,
@@ -168,8 +176,6 @@ exports.AppService = class {
         `ENTRYPOINT ["/var/www/docker/run.sh"]`
       ]
     }
-
-    console.log(laravelVersion)
 
     const steppableCommands = {
       createDatabase: async () => {

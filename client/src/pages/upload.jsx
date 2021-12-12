@@ -163,7 +163,7 @@ const ProgressDialog = ({
               alignItems: "center",
             }}
           >
-            <i className="fas fa-chevron-right"></i>
+            <i className="fas fa-chevron-right"/>
             {intermediateStep}
           </div>
           <br/>
@@ -178,7 +178,7 @@ const ProgressDialog = ({
               alignItems: "center",
             }}
           >
-            <i className="far fa-clock"></i>
+            <i className="far fa-clock"/>
             <span>
               Elapsed Time:{" "}
               {new Date(progressTime * 1000).toISOString().substr(11, 8)}
@@ -223,15 +223,15 @@ const RepoDialog = ({repo}) => {
 
 
   const [environmentVariables, setEnvironmentVariables] = useState("");
-  const [laravelVersion, setLaravelVersion] = useState("");
+  const [phpVersion, setPhpVersion] = useState("");
 
   const installPhpApp = () => {
-    if (!laravelVersion) return;
+    if (!phpVersion) return;
 
     dialog.close({
       environmentVariables,
       language: "php",
-      laravelVersion
+      phpVersion
     });
   };
 
@@ -241,7 +241,7 @@ const RepoDialog = ({repo}) => {
         <React.Fragment>
           <div>
             <label>Laravel Version</label>
-            <select style={{width: "100%", padding: "0.5rem"}} value={laravelVersion} onChange={e => setLaravelVersion(e.target.value)}>
+            <select style={{width: "100%", padding: "0.5rem"}} value={phpVersion} onChange={e => setPhpVersion(e.target.value)}>
               <option value="">Choose One</option>
               <option value="7">7</option>
               <option value="8">8</option>
@@ -271,12 +271,9 @@ export default function YourApps() {
   const {socket} =
     useContext(PublicContext);
 
-  const [file, setFile] = useState(null);
-  const [errors, setErrors] = useState([]);
   const [subdomain, setSubdomain] = useState(null);
   const [githubRepos, setGithubRepos] = useState([]);
   const [defaultGithubRepos, setDefaultGithubRepos] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [progressDialogOpen, setProgressDialogOpen] = useState(false);
   const [progressCount, setProgressCount] = useState(0);
   const [progressTime, setProgressTime] = useState(0);
@@ -289,8 +286,8 @@ export default function YourApps() {
   const [installationComplete, setInstallationComplete] = useState(false);
 
 
-  const [githubAccessToken, setGithubAccessToken] = useState(localStorage.getItem("githubAccessToken"))
-  const [githubUserName, setGithubUserName] = useState(localStorage.getItem("githubUsername"))
+  const githubAccessToken = localStorage.getItem("githubAccessToken")
+  const githubUserName = localStorage.getItem("githubUsername")
 
   const [searchRepoText, setSearchRepoText] = useState("")
 
@@ -315,7 +312,6 @@ export default function YourApps() {
 
       socket.on("app-installation-done", (x) => {
         setSubdomain(x);
-        setLoading(false);
         setInstallationComplete(true);
         setInstallationStarted(false);
         clearTimeout(progressTimeRef.current);
@@ -418,13 +414,12 @@ export default function YourApps() {
       token: githubAccessToken,
       username: githubUserName,
       repo: repo.name,
-      laravelVersion: result.laravelVersion,
+      phpVersion: result.phpVersion,
       environmentVariables: result.environmentVariables,
       language: result.language
     };
 
     socket.emit("install-app", {app, userId: githubUserName});
-    setLoading(true);
     setProgressDialogOpen(true);
   };
 
@@ -467,7 +462,7 @@ export default function YourApps() {
         <StaticDialog
           isOpen={progressDialogOpen}
           title="Installation Progress"
-          onAfterClose={(result) => {
+          onAfterClose={() => {
             setProgressDialogOpen(true);
           }}
         >
