@@ -27,6 +27,8 @@ exports.AppService = class {
     socket.on("install-app", async ({app, userId}) => {
       const subdomain = randomWords({exactly: 3, join: "-"});
 
+      console.log(app.laravelVersion)
+
       if (process.env.NODE_ENV !== "dev") {
         switch (app.language) {
           case "php":
@@ -97,6 +99,7 @@ exports.AppService = class {
     userId,
 
   ) => {
+
     const tarballName = this.installGithubRepo(subdomain, {token, username, repo});
 
     const databaseName = subdomain.split("-").join("_");
@@ -112,7 +115,7 @@ exports.AppService = class {
 
     let commands = []
 
-    if (laravelVersion == 7) {
+    if (laravelVersion == "7") {
       commands = [
         "FROM miko1991/miko-php:v1",
         `COPY ${tarballName}.gz .`,
@@ -142,7 +145,7 @@ exports.AppService = class {
         `RUN echo "DB_PORT=3306" >> .env`,
         `RUN php artisan key:generate`,
       ]
-    } else if (laravelVersion == 8) {
+    } else if (laravelVersion == "7") {
       commands = [
         "FROM miko-php-8:v1",
         `COPY ${tarballName}.gz .`,
@@ -155,6 +158,8 @@ exports.AppService = class {
         `ENTRYPOINT ["/var/www/docker/run.sh"]`
       ]
     }
+
+    console.log(laravelVersion)
 
     const steppableCommands = {
       createDatabase: async () => {
